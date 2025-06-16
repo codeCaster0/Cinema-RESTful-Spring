@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" data-bs-theme="${#cookies.get('theme')?.value ?: 'dark'}">
+<head>
+    <title>Detalhes do Filme</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <style>
+        .analise-card {
+            transition: all 0.3s ease;
+        }
+        .analise-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .rating-badge {
+            font-size: 1rem;
+            padding: 0.5em 0.75em;
+        }
+        #themeToggle {
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        #themeToggle:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Detalhes do Filme</h1>
+            <a th:href="@{/filmes/listar}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+
+        <div th:if="${filme == null}" class="alert alert-danger">
+            Filme não encontrado!
+        </div>
+
+        <div th:if="${filme != null}">
+            <div class="card mb-4 shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h2 class="card-title" th:text="${filme.titulo}"></h2>
+                            <p class="text-muted mb-4">
+                                <span th:text="${filme.genero}"></span> • 
+                                <span th:text="${filme.anoLancamento}"></span>
+                            </p>
+                            <h5 class="mb-3">Sinopse:</h5>
+                            <p class="card-text" th:text="${filme.sinopse}"></p>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center justify-content-center">
+                            <div class="text-center">
+                                <div class="mb-3">
+                                    <span class="badge bg-info text-dark" 
+                                          th:text="${filme.analises != null ? #lists.size(filme.analises) : 0} + ' análises'"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2">
+                        <a th:href="@{'/filmes/editar/' + ${filme.id}}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <form th:action="@{'/filmes/deletar/' + ${filme.id}}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este filme?')">
+                                <i class="bi bi-trash"></i> Excluir
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4 shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="bi bi-chat-square-text"></i> Adicionar Análise</h3>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/analises/adicionar}" method="post" class="needs-validation" novalidate>
+                        <input type="hidden" name="filmeId" th:value="${filme.id}"/>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Sua análise:</label>
+                            <textarea class="form-control" name="analise" rows="3" required></textarea>
+                            <div class="invalid-feedback">Por favor, escreva sua análise.</div>
+                        </div>
+                        
+                        <div class="mb-3 col-md-2">
+                            <label class="form-label">Nota (1-10):</label>
+                            <input type="number" class="form-control" name="nota" min="1" max="10" required/>
+                            <div class="invalid-feedback">Por favor, informe uma nota entre 1 e 10.</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Enviar Análise
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h3 class="mb-0"><i class="bi bi-list-check"></i> Análises</h3>
+                </div>
+                <div class="card-body">
+                    <div th:if="${filme.analises == null or filme.analises.empty}" class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Nenhuma análise disponível ainda. Seja o primeiro a comentar!
+                    </div>
+                    
+                    <div th:if="${filme.analises != null and not filme.analises.empty}">
+                        <div th:each="analise : ${filme.analises}" class="analise-card mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge rating-badge" 
+                                          th:class="${analise.nota >= 8} ? 'bg-success' : 
+                                                    (${analise.nota >= 5} ? 'bg-warning text-dark' : 'bg-danger')"
+                                          th:text="'★ ' + ${analise.nota}"></span>
+                                    <p class="mt-2 mb-1 fw-bold">Análise de Anônimo</p>
+                                    <p class="text-muted small" 
+                                       th:text="${analise.dataCriacao != null} ? ${#temporals.format(analise.dataCriacao, 'dd/MM/yyyy HH:mm')} : 'Data não disponível'"></p>
+                                </div>
+                                <form th:action="@{'/analises/deletar/' + ${analise.id}}" method="post">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja excluir esta análise?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            <p class="mt-2" th:text="${analise.analise}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (() => {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
+    
+    <button id="themeToggle" class="btn btn-sm btn-outline-secondary position-fixed bottom-0 end-0 m-3 rounded-circle" style="width: 40px; height: 40px;">
+        <i id="themeIcon" class="bi"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (() => {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+
+            function applyTheme(theme) {
+                document.documentElement.setAttribute('data-bs-theme', theme);
+                const icon = document.getElementById('themeIcon');
+                icon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+            }
+
+            document.getElementById('themeToggle').addEventListener('click', function() {
+                const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                applyTheme(newTheme);
+                document.cookie = `theme=${newTheme}; path=/; max-age=${60*60*24*365}`;
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const savedTheme = document.cookie.replace(/(?:(?:^|.*;\s*)theme\s*=\s*([^;]*).*$)|^.*$/, '$1') || 'dark';
+                applyTheme(savedTheme);
+            });
+        })();
+    </script>
+</body>
+</html>
+</body>
+</html>

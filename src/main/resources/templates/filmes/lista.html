@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" data-bs-theme="${#cookies.get('theme')?.value ?: 'dark'}">
+<head>
+    <title>Lista de filmes</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <style>
+        #themeToggle {
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        #themeToggle:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">Lista de Filmes</h1>
+
+        <div th:if="${filmes == null or #lists.isEmpty(filmes)}" class="alert alert-info">
+            Nenhum filme cadastrado.
+        </div>
+        
+        <table th:unless="${#lists.isEmpty(filmes)}" class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Título</th>
+                    <th>Gênero</th>
+                    <th>Ano</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="filme : ${filmes}">
+                    <td th:text="${filme.titulo}"></td>
+                    <td th:text="${filme.genero}"></td>
+                    <td th:text="${filme.anoLancamento}"></td>
+                    <td>
+                        <a th:href="@{/filmes/detalhes/{id}(id=${filme.id})}" class="btn btn-sm btn-primary me-2">
+                            <i class="bi bi-eye"></i> Detalhes
+                        </a>
+                        <a th:href="@{/filmes/editar/{id}(id=${filme.id})}" class="btn btn-sm btn-warning me-2">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <form th:action="@{/filmes/deletar/{id}(id=${filme.id})}" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="bi bi-trash"></i> Excluir
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <a th:href="@{/filmes/novo}" class="btn btn-success mt-3">
+            <i class="bi bi-plus-circle"></i> Novo Filme
+        </a>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<button id="themeToggle" class="btn btn-sm btn-outline-secondary position-fixed bottom-0 end-0 m-3 rounded-circle" style="width: 40px; height: 40px;">
+        <i id="themeIcon" class="bi"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            const icon = document.getElementById('themeIcon');
+            icon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            applyTheme(newTheme);
+            document.cookie = `theme=${newTheme}; path=/; max-age=${60*60*24*365}`;
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = document.cookie.replace(/(?:(?:^|.*;\s*)theme\s*=\s*([^;]*).*$)|^.*$/, '$1') || 'dark';
+            applyTheme(savedTheme);
+        });
+    </script>
+</body>
+</html>
